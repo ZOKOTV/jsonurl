@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tạo JSON từ URL</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+body{
+    font-family:'Orbitron',Arial,sans-serif;
+    background:#000;
+    color:#fff;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:30px 10px;
+}
+
+.container{
+    width:100%;
+    max-width:500px;
+    background:#111;
+    padding:30px;
+    border-radius:20px;
+    box-shadow:0 0 25px rgba(255,255,255,.15),
+               0 0 40px rgba(255,255,255,.05) inset;
+}
+
+h2{
+    text-align:center;
+    margin-bottom:25px;
+}
+
+label{
+    display:block;
+    margin-top:15px;
+    margin-bottom:8px;
+    font-weight:bold;
+}
+
+input,
+select,
+button,
+textarea{
+    width:100%;
+    box-sizing:border-box;
+    border-radius:12px;
+    font-size:1em;
+}
+
+input,
+select{
+    padding:12px;
+    border:2px solid #444;
+    background:#000;
+    color:#fff;
+}
+
+button{
+    margin-top:12px;
+    padding:12px;
+    border:1px solid #fff;
+    background:#000;
+    color:#fff;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+button:hover{
+    background:#fff;
+    color:#000;
+}
+
+textarea{
+    height:220px;
+    margin-top:20px;
+    padding:15px;
+    border:2px solid #444;
+    background:#000;
+    color:#fff;
+    resize:none;
+    font-family:monospace;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Tạo JSON từ URL</h2>
+
+<label>URL:</label>
+<input type="text" id="driveLink" placeholder="Nhập URL">
+
+<label>Tên file:</label>
+<input type="text" id="fileName" placeholder="Nhập tên file">
+
+<label>Loại file:</label>
+<select id="fileExt">
+    <option value="">-- Không chọn --</option>
+    <option value="reg">REG</option>
+    <option value="bat">BAT</option>
+    <option value="txt">TXT</option>
+    <option value="msi">MSI</option>
+    <option value="folder">FOLDER</option>
+</select>
+
+<button onclick="addFile()">Thêm vào JSON</button>
+<button onclick="undoLastAdd()">Xóa JSON vừa thêm</button>
+<button onclick="clearJSON()">Clear toàn bộ JSON</button>
+<button onclick="copyJSON()">Copy JSON</button>
+
+<h3>JSON hiện tại:</h3>
+
+<textarea id="jsonOutput" readonly>[ ]</textarea>
+
+</div>
+
+<script>
+
+let files = [];
+let lastAddedCount = 0;
+
+window.onload = () => {
+
+    const saved = localStorage.getItem("driveFiles");
+
+    if(saved){
+        try{
+            files = JSON.parse(saved);
+            document.getElementById("jsonOutput").value =
+                JSON.stringify(files,null,2);
+        }catch{
+            files = [];
+        }
+    }
+};
+
+function saveLocal(){
+    localStorage.setItem(
+        "driveFiles",
+        JSON.stringify(files)
+    );
+}
+
+function addFile(){
+
+    const link =
+        document.getElementById("driveLink").value.trim();
+
+    const name =
+        document.getElementById("fileName").value.trim();
+
+    const ext =
+        document.getElementById("fileExt").value;
+
+    if(!link || !name){
+        alert("Vui lòng nhập đủ thông tin!");
+        return;
+    }
+
+    let finalUrl = link;
+
+    if(link.includes("drive.google.com")){
+
+        let id = "";
+
+        const match1 =
+            link.match(/\/d\/([a-zA-Z0-9_-]+)/);
+
+        if(match1){
+            id = match1[1];
+        }
+
+        if(!id){
+            try{
+                const urlObj = new URL(link);
+                id = urlObj.searchParams.get("id") || "";
+            }catch(e){}
+        }
+
+        if(id){
+            finalUrl =
+                `https://drive.google.com/uc?export=download&id=${id}`;
+        }
+    }
+
+    let file = {
+        name:name,
+        url:finalUrl
+    };
+
+    if(ext){
+        file.ext = ext;
+    }
+
+    files.push(file);
+
+    lastAddedCount = 1;
+
+    document.getElementById("jsonOutput").value =
+        JSON.stringify(files,null,2);
+
+    saveLocal();
+
+    document.getElementById("driveLink").value = "";
+    document.getElementById("fileName").value = "";
+    document.getElementById("fileExt").value = "";
+}
+
+function undoLastAdd(){
+
+    if(lastAddedCount === 0){
+        alert("Không có mục nào vừa thêm!");
+        return;
+    }
+
+    files.splice(-lastAddedCount);
+
+    document.getElementById("jsonOutput").value =
+        JSON.stringify(files,null,2);
+
+    saveLocal();
+
+    lastAddedCount = 0;
+}
+
+function clearJSON(){
+
+    if(confirm("Bạn có chắc muốn xóa toàn bộ JSON?")){
+
+        files = [];
+
+        lastAddedCount = 0;
+
+        document.getElementById("jsonOutput").value = "[ ]";
+
+        saveLocal();
+    }
+}
+
+function copyJSON(){
+
+    const textarea =
+        document.getElementById("jsonOutput");
+
+    navigator.clipboard.writeText(textarea.value)
+    .then(()=>{
+        alert("✅ JSON đã được sao chép!");
+    })
+    .catch(()=>{
+        alert("❌ Sao chép thất bại!");
+    });
+}
+
+</script>
+
+</body>
+</html>
