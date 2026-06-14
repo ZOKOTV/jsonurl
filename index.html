@@ -99,6 +99,9 @@ textarea{
 <label>Tên file:</label>
 <input type="text" id="fileName" placeholder="Nhập tên file">
 
+<label>Tên nút:</label>
+<input type="text" id="buttonText" placeholder="Nhập tên nút">
+
 <label>Loại file:</label>
 <select id="fileExt">
     <option value="">-- Không chọn --</option>
@@ -155,6 +158,9 @@ function addFile(){
     const name =
         document.getElementById("fileName").value.trim();
 
+    const buttonText =
+    document.getElementById("buttonText").value.trim();   
+
     const ext =
         document.getElementById("fileExt").value;
 
@@ -194,6 +200,10 @@ function addFile(){
         url:finalUrl
     };
 
+    if(buttonText){
+    file.buttonText = buttonText;
+    }
+
     if(ext){
         file.ext = ext;
     }
@@ -209,6 +219,7 @@ function addFile(){
 
     document.getElementById("driveLink").value = "";
     document.getElementById("fileName").value = "";
+    document.getElementById("buttonText").value = "";
     document.getElementById("fileExt").value = "";
 }
 
